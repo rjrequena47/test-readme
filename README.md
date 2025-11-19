@@ -3,7 +3,8 @@
 [![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.5.7-6DB33F?logo=spring&logoColor=white)](https://spring.io/projects/spring-boot)  
 [![Java 17](https://img.shields.io/badge/Java-17-ED8B00?logo=java&logoColor=white)](https://openjdk.org)  
 [![Docker](https://img.shields.io/badge/Docker-24.0+-2496ED?logo=docker&logoColor=white)](https://www.docker.com)  
-[![OpenAPI](https://img.shields.io/badge/OpenAPI-3.0-6BA539?logo=openapiinitiative&logoColor=white)](https://swagger.io/specification/)
+[![OpenAPI](https://img.shields.io/badge/OpenAPI-3.0-6BA539?logo=openapiinitiative&logoColor=white)](https://swagger.io/specification/)  
+![Static Badge](https://img.shields.io/badge/Bytes%20Colaborativos-Team%20%232-blue)
 
 > 💡 **Motor de recomendaciones híbrido**: Combina *tags*, *ratings*, *popularidad* y *historial* para sugerir productos relevantes a jugadores.
 
@@ -18,7 +19,7 @@
 - [📡 Endpoints API](#-endpoints-api)
 - [🐳 Despliegue con Docker](#-despliegue-con-docker)
 - [🧪 Pruebas](#-pruebas)
-- [📈 Próximos Pasos](#-próximos-pasos)
+- [📈 Ejecución](#-ejecución)
 
 ---
 
@@ -26,15 +27,19 @@
 
 | Historia de Usuario | Estado | Detalle |
 |---------------------|--------|---------|
-| **HU1** – Configuración inicial | ✅ | Spring Boot 3.5.7, Java 17, Docker, arquitectura limpia |
-| **HU2** – Modelo de datos | ✅ | Entidades JPA con UUID, relaciones, `data.sql` inicial |
-| **HU3** – Autenticación JWT | ✅ | `/auth/register` (PLAYER), `/auth/login`, BCrypt, roles |
-| **HU4** – CRUD de torneos | ✅ | `POST`, `GET`, `DELETE` con validaciones de fechas y roles |
-| **HU5** – Documentación Swagger | ✅ | [Swagger UI](http://localhost:8080/swagger-ui/index.html) funcional |
+| **HU1** – Configuración inicial | ✅ | Spring Boot 3.5.7, Java 17, Docker |
+| **HU2** – Modelo de datos | ✅ | Entidades JPA con UUID, relaciones |
+| **HU3** – Autenticación JWT | ✅ | `/auth/register` (PLAYER), `/auth/login`, BCrypt |
+| **HU4** – CRUD de torneos | ✅ | Validaciones de fechas y estado |
+| **HU5** – Documentación Swagger | ✅ | [Swagger UI](http://localhost:8080/swagger-ui/index.html) |
 | **HU6** – Pruebas Postman | ✅ | Colección con tests automatizados |
+| **HU7** – Registro de ratings | ✅ | Validación de unicidad, score 1–5 |
+| **HU8** – Endpoint de recomendaciones | ✅ | `GET /recommendations/{userId}` (tags + ratings + popularidad) |
+| **HU9** – Control de roles | ✅ | Acceso restringido por rol (ADMIN/PLAYER) |
+| **HU10** – Testing | ✅ | Cobertura 85% (JUnit 5 + Mockito) |
 | **HU11** – Docker | ✅ | Multi-stage build, volúmenes, healthcheck |
 
-> ✅ **Sprint 1 completado**: HU1–HU6 + HU11 listas para producción.
+> ✅ **Proyecto 100% completado**: Todas las funcionalidades listas para producción.
 
 ---
 
@@ -46,7 +51,8 @@ Construir un backend robusto que proporcione:
 ✅ CRUD de torneos con validaciones de negocio  
 ✅ Registro de valoraciones (_ratings_)  
 ✅ **Endpoint principal**: `GET /recommendations/{userId}`  
-✅ Documentación OpenAPI y pruebas automatizadas
+✅ Pruebas automatizadas (85% cobertura)  
+✅ Documentación OpenAPI completa
 
 ---
 
@@ -62,7 +68,7 @@ Construir un backend robusto que proporcione:
 | **API Docs** | SpringDoc OpenAPI 2.7.0 (Swagger UI) |
 | **Mappers** | MapStruct + Lombok |
 | **Contenedores** | Docker + Docker Compose |
-| **Testing** | JUnit 5 + Mockito + Postman |
+| **Testing** | JUnit 5 + Mockito + Jacoco |
 
 ### Principios Aplicados
 - ✅ **Arquitectura limpia** (capas: controller, service, repository)
@@ -97,10 +103,17 @@ recommender-engine/
 │ ├── application.yml  // Configuración general
 │ └── data.sql         // Datos iniciales (5 usuarios, 6 productos, 2 torneos)
 │
+├── src/test/          // Pruebas unitarias e integración
+│ └── java/com/codebytes2/recommender/
+│ ├── service/         // AuthServiceTest, TournamentServiceTest, RecommendationServiceTest
+│ └── controller/      // AuthControllerTest, TournamentControllerTest
+│
 ├── Dockerfile         // Multi-stage build
 ├── docker-compose.yml // Servicios: app + PostgreSQL
 └── README.md
 ```
+
+
 ---
 
 ## 🔐 Seguridad y JWT
@@ -109,7 +122,7 @@ recommender-engine/
 | Rol | Acceso |
 |-----|--------|
 | `ADMIN` | ✅ `POST /api/tournaments`<br>✅ `DELETE /api/tournaments/{id}` |
-| `PLAYER` | ✅ `POST /api/ratings` (HU7)<br>✅ `GET /recommendations/{userId}` (HU8) |
+| `PLAYER` | ✅ `POST /api/ratings`<br>✅ `GET /recommendations/{userId}`<br>✅ `POST /api/tournaments/{id}/join` |
 | Público | ✅ `GET /api/tournaments/**`<br>✅ `POST /auth/**` |
 
 ### Flujo de autenticación
@@ -124,9 +137,6 @@ sequenceDiagram
     else Inválido
         API-->>Cliente: 401 { "message": "Credenciales inválidas" }
     end
-    Cliente->>API: GET /api/tournaments (con Header: Authorization: Bearer eyJ...)
-    API->>API: Validar JWT + roles
-    API-->>Cliente: 200 Datos
 
 ```
 ### Formato del token JWT
@@ -138,7 +148,6 @@ sequenceDiagram
   "exp": 1732086400
 }
 ```
----
 
 ## Endpoints API
 
@@ -154,13 +163,19 @@ sequenceDiagram
 | POST | /api/tournaments | ADMIN | Crea torneo (valida registrationOpenAt < startDate < endDate) |
 | GET | /api/tournaments | Publico | Lista torneos (paginado, filtros: status, game) |
 | GET | /api/tournaments/{id} | Publico | Detalle del torneo |
+| POST | /api/tournaments/{id}/join | PLAYER | Unirse al torneo |
 | DELETE | /api/tournaments/{id} | ADMIN | Elimina torneo (solo si no ha comenzado) |
 
-### Proximamente (Sprint 2)
+### Ratings
 | Metodo | Endpoint | Acceso | Descripcion |
 |--------|----------|--------|-------------|
-| POST | /api/ratings | PLAYER | Valora un producto (score 1–5) |
-| GET | /recommendations/{userId} | Autenticado | Recomendaciones personalizadas |
+| POST | /api/ratings | PLAYER | Valora producto (score 1–5, unicidad por usuario+producto) |
+
+### Recomendaciones
+| Metodo | Endpoint | Acceso | Descripcion |
+|--------|----------|--------|-------------|
+| GET | /recommendations/{userId} | Autenticado | Recomendaciones híbridas (tags + ratings + popularidad) |
+
 
 > [Ver documentacion interactiva en Swagger UI](http://localhost:8080/swagger-ui/index.html)  
 > (Ejecuta docker-compose up primero)
@@ -174,7 +189,7 @@ sequenceDiagram
 - Docker Compose v2.20+
 
 ### Iniciar entorno de desarrollo
-1. git clone https://github.com/tu-usuario/recommender-engine.git
+1. git clone https://github.com/jdnarvaez0/equipo02-bytescolaborativos.git
 2. cd recommender-engine
 3. docker-compose up --build
 
@@ -202,6 +217,8 @@ sequenceDiagram
 - Incluye tests automatizados para:
   - OK Registro/login
   - OK Creacion/eliminacion de torneos
+  - Registro de ratings (validación de unicidad)
+  - Endpoint de recomendaciones
   - OK Validacion de errores (400, 401, 403, 409)
 
 ### Ejecutar pruebas
@@ -211,15 +228,51 @@ sequenceDiagram
 
 ---
 
-## Proximos Pasos (Sprint 2)
+## Ejecución
+1. Construir y ejecutar
+   ```
+   docker-compose up --build
+   ```
+2. Probar ENDPOINTS clave
+   #### Registrar un jugador
+   ```log
+   curl -X POST http://localhost:8080/auth/register \
+   -H "Content-Type: application/json" \
+   -d '{"username":"nuevoJugador","email":"jugador@ejemplo.com","password":"Pass123!"}'
+   ```
+  
+   #### Crear un torneo (con token ADMIN)
+   ```log
+   curl -X POST http://localhost:8080/api/tournaments \
+   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.xxxxx" \
+   -H "Content-Type: application/json" \
+   -d '{
+       "name": "Torneo CS2 Invierno",
+       "game": "Counter-Strike 2",
+       "startDate": "2025-12-10T18:00:00Z",
+       "endDate": "2025-12-12T22:00:00Z",
+       "registrationOpenAt": "2025-11-25T00:00:00Z",
+       "registrationCloseAt": "2025-12-05T00:00:00Z",
+       "rules": "Bo3, mapas oficiales",
+       "maxParticipants": 16
+   }'
+   ```
 
-| HU | Descripcion | Prioridad |
-|----|-------------|-----------|
-| HU7 | Registro de ratings (1–5) con validacion de unicidad | *** |
-| HU8 | Endpoint /recommendations/{userId} (tags + ratings + popularidad) | **** |
-| HU9 | Control de roles refinado (ej: solo PLAYER en ratings) | ** |
-| HU10 | Testing unitario e integracion (80% cobertura) | *** |
-
+   #### Registrar Rating
+   ```
+   curl -X POST http://localhost:8080/api/ratings \
+     -H "Authorization: Bearer <PLAYER_TOKEN>" \
+     -H "Content-Type: application/json" \
+     -d '{
+          "productId": "a1b2c3d4-e5f6-7890-g1h2-i3j4k5l6m7n8",
+          "score": 5
+         }'
+   ```
+   #### Obtener Recomendaciones
+   ```
+   curl -X GET "http://localhost:8080/recommendations/a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11" \
+   -H "Authorization: Bearer <TOKEN>"
+   ```
 ---
 
 ## Contribuir
@@ -245,32 +298,6 @@ MIT License — Ver LICENSE
 
 ---
 
-## Apendice: Ejemplos de uso
-
-### Registrar un jugador
-```log
-curl -X POST http://localhost:8080/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"username":"nuevoJugador","email":"jugador@ejemplo.com","password":"Pass123!"}'
-```
-  
-### Crear un torneo (con token ADMIN)
-```log
-curl -X POST http://localhost:8080/api/tournaments \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.xxxxx" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Torneo CS2 Invierno",
-    "game": "Counter-Strike 2",
-    "startDate": "2025-12-10T18:00:00Z",
-    "endDate": "2025-12-12T22:00:00Z",
-    "registrationOpenAt": "2025-11-25T00:00:00Z",
-    "registrationCloseAt": "2025-12-05T00:00:00Z",
-    "rules": "Bo3, mapas oficiales",
-    "maxParticipants": 16
-  }'
-```
-
 ---
 <style>
     body {
@@ -294,7 +321,7 @@ curl -X POST http://localhost:8080/api/tournaments \
         color: #FFFFFF;
     }
     table tbody tr:nth-child(odd) {
-        background-color: #dedede; //different background color applied to every second row
+        background-color: #dedede;
     }
     h1 {
         font-family: Menlo, monospace;
